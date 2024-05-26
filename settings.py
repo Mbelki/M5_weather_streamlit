@@ -2,7 +2,7 @@ import os
 import streamlit as st
 from dotenv import load_dotenv
 import requests
-from API_weather import get_outdoor_weather
+from weather import get_outdoor_weather
 load_dotenv()
 
 token = os.getenv("SECRET_TOKEN")
@@ -15,6 +15,12 @@ headers = {
 }
 
 def update_user_name(name):
+    """
+    Update the user's name.
+
+    Args:
+        name (str): The new name to set for the user.
+    """
     response = requests.post(f"{BACKEND_URL}/update_current_user_name", headers= headers, json={"name": name})
     if response.status_code == 200:
         st.success("Name added successfully!")
@@ -22,6 +28,12 @@ def update_user_name(name):
         st.error("Failed to add name to the database.")
 
 def get_current_user_name():
+    """
+    Retrieve the current user's name.
+
+    Returns:
+        str: The name of the current user.
+    """
     response = requests.get(f"{BACKEND_URL}/get_current_user_name", headers=headers)
     if response.status_code == 200:
         data = response.json()
@@ -31,7 +43,12 @@ def get_current_user_name():
         return None
     
 def get_wifi_settings():
-    """Fetch WiFi settings from the Flask backend."""
+    """
+    Retrieve the current WiFi settings.
+
+    Returns:
+        list: A list of dictionaries containing WiFi settings, each with 'name' and 'password' keys.
+    """
     response = requests.get(f"{BACKEND_URL}/get_wifi", headers=headers)
     if response.status_code == 200:
         return response.json()
@@ -40,7 +57,13 @@ def get_wifi_settings():
         return None
 
 def submit_new_wifi(name, password):
-    """Submit new WiFi settings to the Flask backend."""
+    """
+    Submit new WiFi settings.
+
+    Args:
+        ssid (str): The SSID of the WiFi network.
+        password (str): The password for the WiFi network.
+    """
     response = requests.post(f"{BACKEND_URL}/add_wifi", json={'name': name, 'password': password}, headers=headers)
     if response.status_code == 200:
         st.success('WiFi settings updated successfully.')

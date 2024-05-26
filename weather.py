@@ -3,8 +3,6 @@ import streamlit as st
 from dotenv import load_dotenv
 import requests
 import pandas as pd
-from API_weather import get_outdoor_weather
-#modifier quand la fonction get_outdoor_weather sera prête dans le backend
 load_dotenv()
 
 token = os.getenv("SECRET_TOKEN")
@@ -15,12 +13,34 @@ BACKEND_URL = "https://backend-ukfss2zija-oa.a.run.app"
 headers = {
     "Authorization": token
 }
-#Réutiliser quand la fonction get_outdoor_weather sera prête dans le backend
-#def get_outdoor_weather():
-#    response = requests.get(f"{BACKEND_URL}/get_outdoor_weather", headers= headers)
-#    return response.json()
+
+def get_outdoor_weather():
+    """
+    Retrieve the current outdoor weather and forecast from the backend.
+
+    Returns:
+        dict: A dictionary containing the current weather and forecast data or an error message.
+    """
+    response = requests.get(f"{BACKEND_URL}/get_outdoor_weather", headers=headers)
+    if response.status_code == 200:
+        try:
+            # Tenter de décoder la réponse JSON
+            return response.json()
+        except ValueError:
+            # Gérer le cas où la réponse ne contient pas de JSON valide
+            return {"error": "No valid JSON response"}
+    else:
+        # Retourner un message ou le code de statut pour indiquer l'erreur
+        return {"error": f"Failed to fetch data, status code: {response.status_code}"}
+
 
 def get_last_indoor_weather():
+    """
+    Retrieve the last recorded indoor weather data from the backend.
+
+    Returns:
+        dict: A dictionary containing the indoor weather data or an error message.
+    """
     response = requests.get(f"{BACKEND_URL}/get_last_indoor_weather", headers= headers)
     if response.status_code == 200:
         try:
@@ -34,12 +54,12 @@ def get_last_indoor_weather():
         return {"error": f"Failed to fetch data, status code: {response.status_code}"}
 
 def display_weather_app():
-
-    # Obtenir les données météorologiques
+    """
+    Display the current outdoor weather and forecast using data retrieved from the API.
+    """
     weather_data = get_outdoor_weather()
 
     if "error" not in weather_data:
-        # Affichage des conditions météorologiques actuelles
         st.subheader('Current Weather')
         current_weather = weather_data['current_weather']
         col1, col2 = st.columns(2)
@@ -49,10 +69,9 @@ def display_weather_app():
             st.subheader(current_weather['condition_text'])
             st.write(f"Temperature: {current_weather['temperature_c']}°C")
 
-        # Affichage des prévisions
         st.subheader('Weather Forecast', divider='grey')
         for forecast in weather_data['forecast']:
-            cols = st.columns(3)  # Créer trois colonnes
+            cols = st.columns(3)
             with cols[0]:
                 st.image(forecast['icon_url'], width=100)
                 st.caption(forecast['date'])
@@ -65,8 +84,13 @@ def display_weather_app():
         st.error("Failed to fetch weather data")
 
 def display_indoor_weather(data):
+    """
+    Display the current indoor weather data.
+
+    Args:
+        data (dict): A dictionary containing indoor weather data or an error message.
+    """
     if "error" not in data:
-        # Utilisation de colonnes pour une mise en page améliorée pour les données intérieures
         col1, col2, col3, col4 = st.columns(4)
         with col1:
             st.metric(label="Temperature", value=f"{data['temperature']} °C", delta_color="off")
@@ -82,6 +106,9 @@ def display_indoor_weather(data):
 def fetch_weather_data():
     """
     Fetch mean indoor weather data from the Flask backend.
+
+    Returns:
+        pd.DataFrame: A pandas DataFrame containing the mean indoor weather data or an empty DataFrame if the request fails.
     """
     response = requests.get(f"{BACKEND_URL}/get_mean_indoor_weather", headers= headers)
     if response.status_code == 200:
